@@ -1,5 +1,6 @@
 # Controlador principal y ejecución de escenario de pruebas de Software FJ
 
+from typing import Optional
 from fallos_sistema import ErrorAplicacionFJ, ValidacionCampoError, TransicionEstadoError
 from bitacora import AuditoriaArchivo
 from nucleo import UsuarioCliente
@@ -11,9 +12,9 @@ class GestorPlataformaFJ:
     # Administra las colecciones en memoria y controla las transacciones del sistema
     def __init__(self, bitacora: AuditoriaArchivo):
         self._bitacora = bitacora
-        self._usuarios: list[UsuarioCliente] = []
-        self._catalogo: list[ServicioBase] = []
-        self._solicitudes: list[SolicitudReserva] = []
+        self._usuarios: list = []
+        self._catalogo: list = []
+        self._solicitudes: list = []
 
     def alta_usuario(self, usuario: UsuarioCliente) -> bool:
         try:
@@ -60,7 +61,7 @@ class GestorPlataformaFJ:
         iva: float = 0.19,
         descuento: float = 0.0,
         recargo: float = 0.0,
-    ) -> SolicitudReserva | None:
+    ) -> Optional[SolicitudReserva]:
         solicitud_final = None
         try:
             cliente = self._obtener_usuario(id_usuario)
@@ -103,8 +104,8 @@ def iniciar_pruebas() -> None:
 
     # Operaciones 1 y 2: Alta exitosa de clientes
     try:
-        u1 = UsuarioCliente("USR-01", "valeria rojas", "vrojas@innovacion.co", "1052398412")
-        u2 = UsuarioCliente("USR-02", "mateo cardenas", "mcardenas@empresa.com", "79456123")
+        u1 = UsuarioCliente("USR-01", "santiago hernandez", "shernandez@innovacion.co", "1052398412")
+        u2 = UsuarioCliente("USR-02", "andrea ochica", "aochica@empresa.com", "79456123")
         plataforma.alta_usuario(u1)
         plataforma.alta_usuario(u2)
         print("[1-2] Clientes registrados correctamente.")
@@ -117,7 +118,7 @@ def iniciar_pruebas() -> None:
         plataforma.alta_usuario(u_err)
     except ErrorAplicacionFJ as e:
         bitacora.registrar_fallo(f"Rechazo en creación de usuario: {e}")
-        print(f"[3]   Error controlado en cliente inválido: {e}")
+        print(f"   Error controlado en cliente inválido: {e}")
 
     # Operaciones 4, 5 y 6: Creación exitosa de los 3 tipos de servicios
     try:
@@ -137,34 +138,34 @@ def iniciar_pruebas() -> None:
         plataforma.alta_servicio(srv_err)
     except ErrorAplicacionFJ as e:
         bitacora.registrar_fallo(f"Rechazo en creación de servicio: {e}")
-        print(f"[7]   Error controlado en servicio inválido: {e}")
+        print(f"   Error controlado en servicio inválido: {e}")
 
     # Operación 8: Reserva exitosa de sala corporativa
     res1 = plataforma.ejecutar_reserva("SOL-001", "USR-01", "SRV-A1", horas=3)
     if res1:
-        print(f"[8]   {res1.ficha_tecnica()}")
+        print(f"   {res1.ficha_tecnica()}")
 
     # Operación 9: Intento fallido de reservar sala ocupada
     res2 = plataforma.ejecutar_reserva("SOL-002", "USR-02", "SRV-A1", horas=2)
     if not res2:
-        print("[9]   Error controlado: sala ocupada no permitió doble reserva.")
+        print("   Error controlado: sala ocupada no permitió doble reserva.")
 
     # Operación 10: Reserva exitosa de consultoría con descuento, IVA y recargo fijo (sobrecarga)
     res3 = plataforma.ejecutar_reserva("SOL-003", "USR-02", "SRV-C3", horas=4, iva=0.19, descuento=0.05, recargo=10000)
     if res3:
-        print(f"[10]  {res3.ficha_tecnica()}")
+        print(f"  {res3.ficha_tecnica()}")
 
     # Operación 11: Intento fallido de alquiler de hardware por menos de 3 horas
     res4 = plataforma.ejecutar_reserva("SOL-004", "USR-01", "SRV-B2", horas=2)
     if not res4:
-        print("[11]  Error controlado: hardware exige mínimo 3 horas.")
+        print("  Error controlado: hardware exige mínimo 3 horas.")
 
     # Operaciones 12 y 13: Anulación de reserva y nueva asignación del recurso liberado
     if plataforma.anular_reserva("SOL-001"):
-        print("[12]  Solicitud SOL-001 anulada; sala liberada.")
+        print("  Solicitud SOL-001 anulada; sala liberada.")
         res5 = plataforma.ejecutar_reserva("SOL-005", "USR-02", "SRV-A1", horas=2, iva=0.0)
         if res5:
-            print(f"[13]  {res5.ficha_tecnica()}")
+            print(f"  {res5.ficha_tecnica()}")
 
     print("\n=== SIMULACIÓN COMPLETADA SIN INTERRUPCIONES ===")
     print("Revise el archivo 'auditoria_fj.log' para verificar el registro detallado.")
